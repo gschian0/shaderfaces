@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import fragment from "./shader/fragment.glsl";
+import fragment2 from "./shader/fragment2.glsl";
+import fragment3 from "./shader/fragment3.glsl";
 import vertex from "./shader/vertex.glsl";
 import dat from "../node_modules/three/examples/jsm/libs/dat.gui.module";
 import { OrbitControls } from "../node_modules/three/examples/jsm/controls/OrbitControls";
@@ -7,7 +9,7 @@ import { OrbitControls } from "../node_modules/three/examples/jsm/controls/Orbit
 export default class Sketch {
   constructor(options) {
     this.scene = new THREE.Scene();
-
+    this.clock = new THREE.Clock();
     this.container = options.dom;
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
@@ -83,9 +85,54 @@ export default class Sketch {
       fragmentShader: fragment,
     });
 
-    this.geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+    this.material2 = new THREE.ShaderMaterial({
+      extensions: {
+        derivatives: "#extension GL_OES_standard_derivatives : enable",
+      },
+      side: THREE.DoubleSide,
+      uniforms: {
+        time: { type: "f", value: 0 },
+        resolution: { type: "v4", value: new THREE.Vector4() },
+        uvRate1: {
+          value: new THREE.Vector2(1, 1),
+        },
+      },
+      // wireframe: true,
+      // transparent: true,
+      vertexShader: vertex,
+      fragmentShader: fragment2,
+    });
 
-    this.plane = new THREE.Mesh(this.geometry, this.material);
+    this.material3 = new THREE.ShaderMaterial({
+      extensions: {
+        derivatives: "#extension GL_OES_standard_derivatives : enable",
+      },
+      side: THREE.DoubleSide,
+      uniforms: {
+        time: { type: "f", value: 0 },
+        resolution: { type: "v4", value: new THREE.Vector4() },
+        uvRate1: {
+          value: new THREE.Vector2(1, 1),
+        },
+      },
+      // wireframe: true,
+      // transparent: true,
+      vertexShader: vertex,
+      fragmentShader: fragment3,
+    });
+
+    this.geometry = new THREE.BoxBufferGeometry(1, 1, 1, 1);
+
+    this.materialFaces = [
+      this.material, //right
+      this.material, // opposite
+      this.material2, //top
+      this.material2, // bottom
+      this.material3, // front
+      this.material3, // left
+    ];
+
+    this.plane = new THREE.Mesh(this.geometry, this.materialFaces);
     this.scene.add(this.plane);
   }
 
@@ -102,8 +149,13 @@ export default class Sketch {
 
   render() {
     if (!this.isPlaying) return;
-    this.time += 0.05;
+    this.time = this.clock.getElapsedTime();
+    this.plane.rotation.y = this.time;
+    this.plane.rotation.x = -this.time;
+    this.plane.rotation.z = this.time * 0.5;
     this.material.uniforms.time.value = this.time;
+    this.material2.uniforms.time.value = this.time;
+    this.material3.uniforms.time.value = this.time;
     requestAnimationFrame(this.render.bind(this));
     this.renderer.render(this.scene, this.camera);
   }

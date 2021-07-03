@@ -4,6 +4,8 @@ import fragment2 from "./shader/fragment2.glsl";
 import fragment3 from "./shader/fragment3.glsl";
 import vertex from "./shader/vertex.glsl";
 import twirl from "./twirl_01.png";
+import twirl2 from "./twirl_02.png";
+import twirl3 from "./twirl_03.png";
 import dat from "../node_modules/three/examples/jsm/libs/dat.gui.module";
 import { OrbitControls } from "../node_modules/three/examples/jsm/controls/OrbitControls";
 
@@ -11,6 +13,8 @@ export default class Sketch {
   constructor(options) {
     this.loader = new THREE.TextureLoader();
     this.twirl = this.loader.load(twirl);
+    this.twirl2 = this.loader.load(twirl2);
+    this.twirl3 = this.loader.load(twirl3);
     this.scene = new THREE.Scene();
     this.clock = new THREE.Clock();
     this.container = options.dom;
@@ -142,27 +146,30 @@ export default class Sketch {
     this.bufferGeo = new THREE.BufferGeometry();
     // this.bufferGeo.copy(this.geometry);
 
-    const count = 500;
+    this.count = 1000;
 
-    const positions = new Float32Array(count * 3); // Multiply by 3 because each position is composed of 3 values (x, y, z)
-
+    const positions = new Float32Array(this.count * 3); // Multiply by 3 because each position is composed of 3 values (x, y, z)
+    const colors = new Float32Array(this.count * 3);
     for (
       let i = 0;
-      i < count * 3;
+      i < this.count * 3;
       i++ // Multiply by 3 for same reason
     ) {
       positions[i] = (Math.random() - 0.5) * 30; // Math.random() - 0.5 to have a random value between -0.5 and +0.5
+      colors[i] = Math.random();
     }
+    this.bufferGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     this.bufferGeo.setAttribute(
       "position",
       new THREE.BufferAttribute(positions, 3)
     ); // Create the Three.js BufferAttribute and specify that each information is composed of 3 values
-
+    this.partArr = [this.twirl, this.twirl2, this.twirl3];
     this.bufferMat = new THREE.PointsMaterial({
       // color: "green",
       map: this.twirl,
     });
+    this.bufferMat.vertexColors = true;
     this.bufferMat.transparent = true;
     this.bufferMat.alphaMap = this.twirl;
     this.bufferMat.alphaTest = 0.001;
@@ -189,9 +196,16 @@ export default class Sketch {
     this.plane.rotation.x = -this.time;
     this.plane.rotation.z = this.time * 0.5;
     this.material.uniforms.time.value = this.time;
-    this.material2.uniforms.time.value = this.time;
-    this.material3.uniforms.time.value = this.time;
-    this.bufferPoints.rotation.y = this.time * 0.25;
+    this.material2.uniforms.time.value = this.time * 0.75;
+    this.material3.uniforms.time.value = this.time * 0.5;
+    //this.bufferPoints.rotation.y = this.time * 0.25;
+    for (let i = 0; i < this.count; i++) {
+      const i3 = i * 3;
+
+      this.bufferGeo.attributes.position.array[i3 + 1] =
+        10 * Math.sin(200 * i + this.time);
+    }
+    this.bufferGeo.attributes.position.needsUpdate = true;
     requestAnimationFrame(this.render.bind(this));
     this.renderer.render(this.scene, this.camera);
   }

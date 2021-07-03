@@ -3,20 +3,23 @@ import fragment from "./shader/fragment.glsl";
 import fragment2 from "./shader/fragment2.glsl";
 import fragment3 from "./shader/fragment3.glsl";
 import vertex from "./shader/vertex.glsl";
+import twirl from "./twirl_01.png";
 import dat from "../node_modules/three/examples/jsm/libs/dat.gui.module";
 import { OrbitControls } from "../node_modules/three/examples/jsm/controls/OrbitControls";
 
 export default class Sketch {
   constructor(options) {
+    this.loader = new THREE.TextureLoader();
+    this.twirl = this.loader.load(twirl);
     this.scene = new THREE.Scene();
     this.clock = new THREE.Clock();
     this.container = options.dom;
     this.width = this.container.offsetWidth;
     this.height = this.container.offsetHeight;
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.width, this.height);
-    this.renderer.setClearColor(0xeeeeee, 1);
+    this.renderer.setClearColor(0xffc0cb, 1);
     this.renderer.outputEncoding = THREE.sRGBEncoding;
 
     this.container.appendChild(this.renderer.domElement);
@@ -31,7 +34,7 @@ export default class Sketch {
     // var frustumSize = 10;
     // var aspect = window.innerWidth / window.innerHeight;
     // this.camera = new THREE.OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, -1000, 1000 );
-    this.camera.position.set(0, 0, 2);
+    this.camera.position.set(0, 0, 20);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.time = 0;
 
@@ -121,7 +124,7 @@ export default class Sketch {
       fragmentShader: fragment3,
     });
 
-    this.geometry = new THREE.BoxBufferGeometry(1, 1, 1, 1);
+    this.geometry = new THREE.BoxBufferGeometry(10, 10, 10, 10, 10, 10);
 
     this.materialFaces = [
       this.material, //right
@@ -134,6 +137,38 @@ export default class Sketch {
 
     this.plane = new THREE.Mesh(this.geometry, this.materialFaces);
     this.scene.add(this.plane);
+
+    // create buffer style
+    this.bufferGeo = new THREE.BufferGeometry();
+    // this.bufferGeo.copy(this.geometry);
+
+    const count = 500;
+
+    const positions = new Float32Array(count * 3); // Multiply by 3 because each position is composed of 3 values (x, y, z)
+
+    for (
+      let i = 0;
+      i < count * 3;
+      i++ // Multiply by 3 for same reason
+    ) {
+      positions[i] = (Math.random() - 0.5) * 30; // Math.random() - 0.5 to have a random value between -0.5 and +0.5
+    }
+
+    this.bufferGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(positions, 3)
+    ); // Create the Three.js BufferAttribute and specify that each information is composed of 3 values
+
+    this.bufferMat = new THREE.PointsMaterial({
+      // color: "green",
+      map: this.twirl,
+    });
+    this.bufferMat.transparent = true;
+    this.bufferMat.alphaMap = this.twirl;
+    this.bufferMat.alphaTest = 0.001;
+    //this.bufferMat.depthTest = false;
+    this.bufferPoints = new THREE.Points(this.bufferGeo, this.bufferMat);
+    this.scene.add(this.bufferPoints);
   }
 
   stop() {
@@ -156,6 +191,7 @@ export default class Sketch {
     this.material.uniforms.time.value = this.time;
     this.material2.uniforms.time.value = this.time;
     this.material3.uniforms.time.value = this.time;
+    this.bufferPoints.rotation.y = this.time * 0.25;
     requestAnimationFrame(this.render.bind(this));
     this.renderer.render(this.scene, this.camera);
   }

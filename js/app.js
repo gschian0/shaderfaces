@@ -191,7 +191,7 @@ export default class Sketch {
 
   render() {
     if (!this.isPlaying) return;
-    this.time = this.clock.getElapsedTime();
+    this.time = this.clock.getElapsedTime() * Math.PI * 0.25;
     this.plane.rotation.y = this.time;
     this.plane.rotation.x = -this.time;
     this.plane.rotation.z = this.time * 0.5;

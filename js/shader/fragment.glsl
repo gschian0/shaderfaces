@@ -7,5 +7,14 @@ varying vec3 vPosition;
 float PI = 3.141592653589793238;
 void main()	{
 	// vec2 newUV = (vUv - vec2(0.5))*resolution.zw + vec2(0.5);
-	gl_FragColor = vec4(sin(vUv.x-time)*0.5+0.5, cos(vUv.y+time)*0.5+0.5,1.0,1.);
+	vec2 uv = vUv.xy;
+    vec2 stepUV = uv;
+	stepUV *= 5.;
+    float steppah = step(fract(stepUV.x),0.5);;
+    vec3 finalCol = vec3(sin(vUv.x-time)*0.5+0.5, cos(vUv.y+time)*0.5+0.5,1.0);
+	gl_FragColor = vec4(finalCol*steppah,1.);
+	
+	
+	
+	// gl_FragColor = vec4(sin(vUv.x-time)*0.5+0.5, cos(vUv.y+time)*0.5+0.5,1.0,1.);
 }
